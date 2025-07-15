@@ -1,0 +1,136 @@
+name: Show FileTree
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: write  # 用于部署到Pages
+  pages: write     # 用于部署到Pages
+
+jobs:
+  generate-tree:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 获取文件树（处理递归目录）
+      - name: Fetch file structure
+        id: get-files
+        uses: actions/github-script@v6
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用当前仓库的token
+        with:
+          script: |
+            const fetchFiles = async (path) => {
+              const { data } = await github.rest.repos.getContent({
+                owner: 'BBBBBBlack',
+                repo: 'Black2-Notes',
+                path: path,
+                ref: 'main'
+              });
+              
+              const results = [];
+              for (const item of data) {
+                if (item.type === 'dir') {
+                  const subItems = await fetchFiles(item.path);
+                  results.push(...subItems);
+                } else {
+                  results.push({
+                    name: item.name,
+                    path: item.path,
+                    type: item.type,
+                    url: item.html_url
+                  });
+                }
+              }
+              return results;
+            };
+            
+            const allFiles = await fetchFiles('paper notes');
+            return JSON.stringify(allFiles);  # 转为JSON字符串传递
+
+      # 生成带完整路径的HTML
+      - name: Generate HTML
+        run: |
+          cat << 'EOF' > index.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Paper Notes Browser</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+              .dir { color: #0366d6; cursor: pointer; font-weight: bold; margin: 5px 0; }
+              .file { color: #24292e; margin: 3px 0; display: block; }
+              .dir::before { content: "📂 "; }
+              .file::before { content: "📄 "; }
+              ul { list-style: none; padding-left: 15px; border-left: 1px dashed #ddd; }
+              .hidden { display: none; }
+              a { text-decoration: none; color: inherit; }
+              a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <h1>📚 Paper Notes</h1>
+            <div id="tree"></div>
+            
+            <script>
+              const rawData = '${{ steps.get-files.outputs.result }}';
+              const data = JSON.parse(rawData.replace(/&quot;/g, '"'));
+              
+              // 构建层级结构
+              function buildTree(items) {
+                const tree = {};
+                items.forEach(item => {
+                  const pathParts = item.path.replace('paper notes/', '').split('/');
+                  let currentLevel = tree;
+                  
+                  pathParts.slice(0, -1).forEach(part => {
+                    if (!currentLevel[part]) {
+                      currentLevel[part] = {};
+                    }
+                    currentLevel = currentLevel[part];
+                  });
+                  
+                  currentLevel[pathParts[pathParts.length - 1]] = item;
+                });
+                return tree;
+              }
+              
+              // 渲染HTML
+              function renderTree(node, path = '') {
+                let html = '<ul>';
+                Object.keys(node).forEach(key => {
+                  const item = node[key];
+                  if (item.url) { // 文件
+                    html += `<li class="file"><a href="${item.url}" target="_blank">${key}</a></li>`;
+                  } else { // 目录
+                    html += `<li class="dir" onclick="toggleDir(this)">${key}`;
+                    html += renderTree(item, `${path}${key}/`);
+                    html += `</li>`;
+                  }
+                });
+                return html + '</ul>';
+              }
+              
+              function toggleDir(element) {
+                const ul = element.querySelector('ul');
+                if (ul) ul.classList.toggle('hidden');
+              }
+              
+              document.getElementById('tree').innerHTML = renderTree(buildTree(data));
+              
+              // 默认展开第一级
+              document.querySelectorAll('#tree > ul > li.dir').forEach(el => {
+                el.querySelector('ul').classList.remove('hidden');
+              });
+            </script>
+          </body>
+          </html>
+          EOF
+
+      # 部署到GitHub Pages
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
