@@ -75,6 +75,8 @@ jobs:
             <div id="tree"></div>
             
             <script>
+              const raw = ${{ toJson(steps.get-files.outputs.result) }};
+              document.getElementById('raw-output').textContent = raw;
               const data = JSON.parse(${{ toJson(steps.get-files.outputs.result) }});
               
               // 构建层级结构
