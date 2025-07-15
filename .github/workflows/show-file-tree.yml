@@ -98,25 +98,27 @@ jobs:
               }
               
               // 渲染HTML
-              function renderTree(node, path = '') {
-                let html = '<ul>';
+              function renderTree(node, path = '', level = 0) {
+                let html = '<ul' + (level === 0 ? '' : ' class="hidden"') + '>';
                 Object.keys(node).forEach(key => {
                   const item = node[key];
-                  if (item.url) { // 文件
+                  if (item.url) {
                     html += `<li class="file"><a href="${item.url}" target="_blank">${key}</a></li>`;
-                  } else { // 目录
-                    html += `<li class="dir" onclick="toggleDir(this)">${key}`;
-                    html += renderTree(item, `${path}${key}/`);
+                  } else {
+                    html += `<li class="dir"><span onclick="toggleDir(this)">${key}</span>`;
+                    html += renderTree(item, `${path}${key}/`, level + 1);
                     html += `</li>`;
                   }
                 });
                 return html + '</ul>';
               }
-              
-              function toggleDir(element) {
-                const ul = element.querySelector('ul');
+
+              function toggleDir(span) {
+                const li = span.parentElement;
+                const ul = li.querySelector('ul');
                 if (ul) ul.classList.toggle('hidden');
               }
+
               
               document.getElementById('tree').innerHTML = renderTree(buildTree(data));
               
