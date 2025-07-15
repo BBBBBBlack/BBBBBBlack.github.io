@@ -75,8 +75,8 @@ jobs:
             <div id="tree"></div>
             
             <script>
-              const rawData = '${{ steps.get-files.outputs.result }}';
-              const data = JSON.parse(rawData.replace(/&quot;/g, '"'));
+             const rawData = decodeURIComponent('${{ steps.get-files.outputs.result }}'.replace(/&quot;/g, '"'));
+              const data = JSON.parse(rawData);
               
               // 构建层级结构
               function buildTree(items) {
