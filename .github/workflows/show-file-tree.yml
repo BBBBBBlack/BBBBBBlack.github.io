@@ -5,8 +5,8 @@ on:
     - cron: '0 0 * * *'
 
 permissions:
-  contents: write  # 用于部署到Pages
-  pages: write     # 用于部署到Pages
+  contents: write
+  pages: write
 
 jobs:
   generate-tree:
@@ -19,7 +19,7 @@ jobs:
         id: get-files
         uses: actions/github-script@v6
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用当前仓库的token
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           script: |
             const fetchFiles = async (path) => {
@@ -48,7 +48,7 @@ jobs:
             };
             
             const allFiles = await fetchFiles('paper notes');
-            return JSON.stringify(allFiles);  # 转为JSON字符串传递
+            return JSON.stringify(allFiles);  // 转为JSON字符串传递
 
       # 生成带完整路径的HTML
       - name: Generate HTML
@@ -129,7 +129,6 @@ jobs:
           </html>
           EOF
 
-      # 部署到GitHub Pages
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
