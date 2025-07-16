@@ -57,7 +57,7 @@ jobs:
           <!DOCTYPE html>
           <html>
           <head>
-            <title>Paper Notes Browser</title>
+            <title>BBBBBBlack's Website</title>
             <style>
               body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
               .dir { color: #0366d6; cursor: pointer; font-weight: bold; margin: 5px 0; }
@@ -82,6 +82,12 @@ jobs:
               function buildTree(items) {
                 const tree = {};
                 items.forEach(item => {
+
+		  // 跳过assets和attachments目录
+      		  if (item.path.includes('assets/') || item.path.includes('attachments/')) {
+        	    return;
+      		  }
+
                   const pathParts = item.path.replace('paper notes/', '').split('/');
                   let currentLevel = tree;
                   
@@ -123,9 +129,9 @@ jobs:
               document.getElementById('tree').innerHTML = renderTree(buildTree(data));
               
               // 默认展开第一级
-              document.querySelectorAll('#tree > ul > li.dir').forEach(el => {
-                el.querySelector('ul').classList.remove('hidden');
-              });
+              // document.querySelectorAll('#tree > ul > li.dir').forEach(el => {
+              //   el.querySelector('ul').classList.remove('hidden');
+              // });
             </script>
           </body>
           </html>
