@@ -77,16 +77,16 @@ jobs:
             <script>
               const rawData = decodeURIComponent(${{ steps.get-files.outputs.result }}.replace(/[\\]/g, ''));
               const data = JSON.parse(rawData);
-              
+
               // 构建层级结构
               function buildTree(items) {
                 const tree = {};
                 items.forEach(item => {
 
-		  // 跳过assets和attachments目录
-      		  if (item.path.includes('assets/') || item.path.includes('attachments/')) {
-        	    return;
-      		  }
+                  // 跳过assets和attachments目录
+                  if (item.path.includes('assets/') || item.path.includes('attachments/')) {
+                    return;
+                  }
 
                   const pathParts = item.path.replace('paper notes/', '').split('/');
                   let currentLevel = tree;
@@ -102,6 +102,7 @@ jobs:
                 });
                 return tree;
               }
+              
               
               // 渲染HTML
               function renderTree(node, path = '', level = 0) {
